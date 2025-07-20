@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlaskAI Chatbot - Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"/>
+    <style>
+        .dark { background-color: rgb(17 24 39 / 1); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .chat-container { max-height: calc(100vh - 200px); scrollbar-width: thin; scrollbar-color: #64748b #f1f5f9; }
+        .dark .chat-container { scrollbar-color: #64748b #374151; }
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+        .dark .chat-container::-webkit-scrollbar-track { background: #374151; }
+        .chat-container::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
+        .chat-container::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .message-animation { animation: slideInUp 0.3s ease-out; }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .typing-indicator { display: inline-flex; align-items: center; }
+        .typing-indicator span { height: 8px; width: 8px; border-radius: 50%; background-color: #6b7280; display: inline-block; margin-right: 4px; animation: typing 1.4s infinite ease-in-out; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+        .suggestion-btn { transition: all 0.2s ease; }
+        .suggestion-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .personality-card { transition: all 0.3s ease; }
+        .personality-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+        .personality-card.selected { border-color: #3b82f6; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
+        .code-block { background: #1e293b; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; overflow-x: auto; }
+        .image-preview { max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover; }
+        .feature-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 relative overflow-visible">
+        <div class="absolute inset-0 pointer-events-none z-0">
+            <!-- Subtle animated background pattern -->
+            <svg class="w-full h-full animate-pulse opacity-10" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="40" fill="#667eea"/>
+                <circle cx="200" cy="50" r="40" fill="#764ba2"/>
+                <circle cx="350" cy="50" r="40" fill="#10b981"/>
+            </svg>
+        </div>
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center relative z-10">
+            <div class="flex items-center space-x-3">
+                <!-- Logo removed -->
+                <div>
+                    <h1 class="text-2xl font-extrabold text-gray-800 dark:text-white tracking-tight">FlaskAI Chatbot</h1>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Premium Grok-like Experience</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Welcome Message -->
+    <main class="max-w-6xl mx-auto p-4">
+        <div id="welcomeMessage" class="text-center py-12">
+            <div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-comments text-white text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Welcome to FlaskAI Chatbot!</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Experience Grok AI-like features with multi-modal support, web search, and personality modes.</p>
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <span class="feature-badge">Multi-Modal</span>
+                <span class="feature-badge">Web Search</span>
+                <span class="feature-badge">Code Execution</span>
+                <span class="feature-badge">Personality Modes</span>
+                <span class="feature-badge">Memory</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                <button class="sample-question suggestion-btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    <span class="text-gray-800 dark:text-white">What's the latest news about AI?</span>
+                </button>
+                <button class="sample-question suggestion-btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-code text-blue-500 mr-2"></i>
+                    <span class="text-gray-800 dark:text-white">Write a Python function to sort a list</span>
+                </button>
+                <button class="sample-question suggestion-btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-camera text-green-500 mr-2"></i>
+                    <span class="text-gray-800 dark:text-white">Upload an image to analyze</span>
+                </button>
+                <button class="sample-question suggestion-btn bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-fire text-purple-500 mr-2"></i>
+                    <span class="text-gray-800 dark:text-white">Tell me a joke in Grok style</span>
+                </button>
+            </div>
+        </div>
+        <div id="chatContainer" class="chat-container overflow-y-auto space-y-4 mb-6 hidden"></div>
+        <div id="suggestionsContainer" class="hidden mb-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Suggestions:</p>
+            <div id="suggestionsList" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sticky bottom-0 z-30">
+            <div id="imagePreviewContainer" class="hidden mb-3">
+                <div class="flex items-center space-x-2">
+                    <img id="imagePreview" class="image-preview" alt="Preview">
+                    <button id="removeImage" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button id="imageUploadBtn" class="p-2 text-gray-500 hover:text-blue-500 transition-colors min-h-[48px] min-w-[48px]" title="Upload Image">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                <div class="flex-1">
+                    <textarea id="messageInput" placeholder="Type your message here... (Supports images, code, and web search)" class="w-full bg-transparent text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:outline-none" rows="1" maxlength="2000"></textarea>
+                </div>
+                <button id="sendButton" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl px-6 py-2 font-medium transition-all duration-200 transform hover:scale-105 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[48px] min-w-[48px]" aria-label="Send">
+                    <i class="fas fa-paper-plane"></i>
+                    <span class="ml-2 hidden sm:inline">Send</span>
+                </button>
+            </div>
+            <div class="flex justify-between items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>Press Enter to send, Shift+Enter for new line</span>
+                <span id="charCount">0/2000</span>
+            </div>
+        </div>
+    </main>
+    <!-- Sidebar Drawer for Chat History -->
+    <button id="sidebarToggle" class="fixed top-6 left-4 z-40 bg-blue-500 text-white rounded-full p-2 shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400" aria-label="Open chat history">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div id="sidebarDrawer" class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <span class="text-lg font-bold text-gray-800 dark:text-white">Chat History</span>
+            <button id="sidebarClose" class="text-gray-500 hover:text-red-500 focus:outline-none" aria-label="Close chat history">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4" id="sessionList">
+            <!-- Sessions will be loaded here -->
+        </div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <button id="newChatBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i> New Chat
+            </button>
+        </div>
+    </div>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-30 z-40 hidden"></div>
+    <!-- Canvas/Explore Button -->
+    <button id="canvasBtn" class="fixed bottom-8 right-8 z-40 bg-green-500 text-white rounded-full p-4 shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400" aria-label="Open canvas">
+        <i class="fas fa-shapes text-xl"></i>
+    </button>
+    <!-- Canvas Modal -->
+    <div id="canvasModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] flex flex-col relative">
+            <button id="closeCanvas" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl focus:outline-none" aria-label="Close canvas">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <span class="text-lg font-bold text-gray-800 dark:text-white">Explore Canvas</span>
+            </div>
+            <div class="flex-1 overflow-auto">
+                <div id="canvasContainer" class="w-full h-full"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/konva@9.2.2/konva.min.js"></script>
+    <script>
+        let currentPersonality = 'default';
+        let selectedImage = null;
+        let userPreferences = { enable_web_search: true, enable_code_execution: false, max_context_length: 10 };
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const body = document.body;
+        // Personality, settings, and dark mode logic would go here (omitted for brevity)
+        // Image upload functionality
+        const imageUploadBtn = document.getElementById('imageUploadBtn');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeImage = document.getElementById('removeImage');
+        imageUploadBtn.addEventListener('click', () => { imageInput.click(); });
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedImage = e.target.result;
+                    imagePreview.src = selectedImage;
+                    imagePreviewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        removeImage.addEventListener('click', () => {
+            selectedImage = null;
+            imagePreviewContainer.classList.add('hidden');
+            imageInput.value = '';
+        });
+        // Chat functionality
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatContainer = document.getElementById('chatContainer');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const suggestionsContainer = document.getElementById('suggestionsContainer');
+        const suggestionsList = document.getElementById('suggestionsList');
+        const charCount = document.getElementById('charCount');
+        const sampleQuestions = document.querySelectorAll('.sample-question');
+        messageInput.addEventListener('input', () => { charCount.textContent = `${messageInput.value.length}/2000`; });
+        messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+        sampleQuestions.forEach(btn => { btn.addEventListener('click', () => { messageInput.value = btn.querySelector('span').textContent; sendMessage(); }); });
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message && !selectedImage) return;
+            welcomeMessage.classList.add('hidden');
+            chatContainer.classList.remove('hidden');
+            addMessage('user', message, selectedImage);
+            messageInput.value = '';
+            charCount.textContent = '0/2000';
+            if (selectedImage) { selectedImage = null; imagePreviewContainer.classList.add('hidden'); imageInput.value = ''; }
+            const typingId = addTypingIndicator();
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: message, personality_mode: currentPersonality, include_web_search: userPreferences.enable_web_search, image_data: selectedImage })
+                });
+                const data = await response.json();
+                removeTypingIndicator(typingId);
+                if (data.error) { addMessage('assistant', `Error: ${data.error}`, null, { isError: true }); }
+                else { addMessage('assistant', data.response, null, { suggestions: data.suggestions, web_sources: data.web_sources, code_suggestion: data.code_suggestion, personality_note: data.personality_note }); }
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessage('assistant', 'Sorry, something went wrong. Please try again.', null, { isError: true });
+            }
+        }
+        function addMessage(sender, content, image = null, metadata = {}) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-animation flex ${sender === 'user' ? 'justify-end' : 'justify-start'} items-end`;
+            // Avatar removed
+            // Bubble
+            const messageContent = document.createElement('div');
+            messageContent.className = `max-w-xs lg:max-w-md xl:max-w-lg p-4 rounded-2xl shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 outline-none group relative ${ sender === 'user' ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' : 'bg-gradient-to-br from-white via-gray-50 to-gray-200 dark:from-gray-800 dark:via-gray-900 dark:to-gray-700 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-700' }`;
+            messageContent.tabIndex = 0;
+            messageContent.setAttribute('aria-label', sender === 'user' ? 'Your message' : 'Assistant message');
+            if (image) {
+                const img = document.createElement('img');
+                img.src = image;
+                img.className = 'w-full rounded-lg mb-2';
+                img.alt = 'Uploaded image';
+                messageContent.appendChild(img);
+            }
+            if (content) {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'whitespace-pre-wrap';
+                textDiv.textContent = content;
+                messageContent.appendChild(textDiv);
+            }
+            if (metadata.web_sources && metadata.web_sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'mt-2 text-xs text-blue-600 dark:text-blue-400';
+                sourcesDiv.textContent = 'Sources: ' + metadata.web_sources.join(', ');
+                messageContent.appendChild(sourcesDiv);
+            }
+            if (metadata.code_suggestion) {
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'mt-3 relative';
+                codeDiv.innerHTML = `<pre class=\"text-sm code-block\"><code>${metadata.code_suggestion}</code></pre>`;
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs shadow focus:outline-none focus:ring-2 focus:ring-blue-400';
+                copyBtn.textContent = 'Copy';
+                copyBtn.setAttribute('aria-label', 'Copy code');
+                copyBtn.onclick = () => { navigator.clipboard.writeText(metadata.code_suggestion); copyBtn.textContent = 'Copied!'; setTimeout(() => (copyBtn.textContent = 'Copy'), 1200); };
+                codeDiv.appendChild(copyBtn);
+                messageContent.appendChild(codeDiv);
+                if (window.Prism) { setTimeout(() => Prism.highlightAllUnder(codeDiv), 0); }
+            }
+            if (metadata.personality_note) {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'mt-2 text-xs italic text-gray-500 dark:text-gray-400';
+                noteDiv.textContent = metadata.personality_note;
+                messageContent.appendChild(noteDiv);
+            }
+            // Only show the bubble
+            messageDiv.appendChild(messageContent);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (metadata.suggestions && metadata.suggestions.length > 0) { showSuggestions(metadata.suggestions); }
+        }
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message-animation flex justify-start';
+            typingDiv.id = 'typing-indicator';
+            const typingContent = document.createElement('div');
+            typingContent.className = 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4';
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+            typingContent.appendChild(typingIndicator);
+            typingDiv.appendChild(typingContent);
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return 'typing-indicator';
+        }
+        function removeTypingIndicator(id) {
+            const typingIndicator = document.getElementById(id);
+            if (typingIndicator) { typingIndicator.remove(); }
+        }
+        function showSuggestions(suggestions) {
+            suggestionsList.innerHTML = '';
+            suggestions.forEach(suggestion => {
+                const button = document.createElement('button');
+                button.className = 'suggestion-btn bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm transition-all';
+                button.textContent = suggestion;
+                button.addEventListener('click', () => { messageInput.value = suggestion; sendMessage(); });
+                suggestionsList.appendChild(button);
+            });
+            suggestionsContainer.classList.remove('hidden');
+        }
+        sendButton.classList.add('transition-transform', 'duration-200', 'ease-in-out');
+        sendButton.addEventListener('mousedown', () => sendButton.classList.add('scale-95'));
+        sendButton.addEventListener('mouseup', () => sendButton.classList.remove('scale-95'));
+        sendButton.addEventListener('mouseleave', () => sendButton.classList.remove('scale-95'));
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/preferences');
+                if (response.ok) { const prefs = await response.json(); userPreferences = { ...userPreferences, ...prefs }; }
+            } catch (error) { console.error('Failed to load preferences:', error); }
+        });
+        // Sidebar drawer logic
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarDrawer = document.getElementById('sidebarDrawer');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sessionList = document.getElementById('sessionList');
+        const newChatBtn = document.getElementById('newChatBtn');
+        let currentSessionId = null;
+        function openSidebar() {
+            sidebarDrawer.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            sidebarDrawer.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+        sidebarToggle.addEventListener('click', openSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        // Load sessions from backend
+        async function loadSessions() {
+            sessionList.innerHTML = '<div class="text-gray-400 text-center py-4">Loading...</div>';
+            const res = await fetch('/api/sessions');
+            const data = await res.json();
+            sessionList.innerHTML = '';
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(session => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-full text-left px-3 py-2 rounded-lg mb-2 transition-colors ${currentSessionId === session.id ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200'}`;
+                    btn.textContent = session.title || 'Untitled Chat';
+                    btn.onclick = () => { loadSessionMessages(session.id); closeSidebar(); };
+                    sessionList.appendChild(btn);
+                });
+            } else {
+                sessionList.innerHTML = '<div class="text-gray-400 text-center py-4">No chats yet.</div>';
+            }
+        }
+        // New chat
+        newChatBtn.addEventListener('click', async () => {
+            const res = await fetch('/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New Chat' }) });
+            const data = await res.json();
+            if (data.session_id) {
+                currentSessionId = data.session_id;
+                loadSessions();
+                clearChat();
+                closeSidebar();
+            }
+        });
+        // Load messages for a session
+        async function loadSessionMessages(sessionId) {
+            currentSessionId = sessionId;
+            const res = await fetch(`/api/session/${sessionId}`);
+            const data = await res.json();
+            clearChat();
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
+                    addMessage(msg.sender, msg.content, null, msg.metadata);
+                });
+            }
+        }
+        // Clear chat area
+        function clearChat() {
+            chatContainer.innerHTML = '';
+            welcomeMessage.classList.remove('hidden');
+        }
+        // On page load, load sessions
+        window.addEventListener('load', loadSessions);
+        // Canvas modal logic
+        const canvasBtn = document.getElementById('canvasBtn');
+        const canvasModal = document.getElementById('canvasModal');
+        const closeCanvas = document.getElementById('closeCanvas');
+        canvasBtn.addEventListener('click', () => { canvasModal.classList.remove('hidden'); initCanvas(); });
+        closeCanvas.addEventListener('click', () => { canvasModal.classList.add('hidden'); });
+        // Basic Konva canvas setup
+        let stage, layer;
+        function initCanvas() {
+            const container = document.getElementById('canvasContainer');
+            container.innerHTML = '';
+            stage = new Konva.Stage({ container: 'canvasContainer', width: container.offsetWidth, height: container.offsetHeight });
+            layer = new Konva.Layer();
+            stage.add(layer);
+            // Example: Add draggable chat bubbles for each message in current chat
+            const chatBubbles = Array.from(chatContainer.children);
+            chatBubbles.forEach((bubble, i) => {
+                const text = bubble.innerText || bubble.textContent;
+                const group = new Konva.Group({ x: 40 + (i%3)*180, y: 40 + Math.floor(i/3)*120, draggable: true });
+                const rect = new Konva.Rect({ width: 160, height: 80, fill: '#f3f4f6', cornerRadius: 16, shadowBlur: 8 });
+                const konvaText = new Konva.Text({ text: text.slice(0, 120), fontSize: 14, fill: '#222', padding: 10, width: 140 });
+                group.add(rect);
+                group.add(konvaText);
+                layer.add(group);
+                // Adjust rect height to fit text
+                rect.height(konvaText.height() + 20);
+                group.on('dblclick', () => {
+                    const note = prompt('Add/Edit annotation:', group.annotation || '');
+                    if (note !== null) {
+                        group.annotation = note;
+                        if (!group.noteText) {
+                            group.noteText = new Konva.Text({ text: note, fontSize: 12, fill: '#10b981', y: rect.height() - 18, x: 10 });
+                            group.add(group.noteText);
+                        } else {
+                            group.noteText.text(note);
+                        }
+                    }
+                });
+            });
+            layer.draw();
+        }
+        window.addEventListener('resize', () => {
+            if (stage && layer) {
+                const container = document.getElementById('canvasContainer');
+                stage.width(container.offsetWidth);
+                stage.height(container.offsetHeight);
+                layer.draw();
+            }
+        });
+    </script>
+</body>
+</html> 
